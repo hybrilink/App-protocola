@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>HybriLink - Portail Protocole</title>
+  <!-- PWA Meta Tags -->
+    <meta name="application-name" content="hybrilink Secrétariat">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="hybrilink Sec">
+    <meta name="description" content="Gestion scolaire complète">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="msapplication-TileColor" content="#3498db">
+    <meta name="msapplication-tap-highlight" content="no">
+    <meta name="theme-color" content="#3498db">
+
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="icon-167x167.png">
+
+    <!-- Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Great+Vibes&family=Montserrat:wght@300;400;600;700&display=swap');
+        
+        :root {
+            --gold-primary: #C9A84C;
+            --gold-light: #DFC878;
+            --gold-dark: #8B6914;
+            --burgundy: #6B1D2F;
+            --burgundy-light: #8B2D3F;
+            --black-velvet: #0D0D0D;
+            --cream: #FDF8F0;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 30%, #0f0f1a 60%, #0a0a0a 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            font-family: 'Cormorant Garamond', 'Georgia', serif;
+            background-attachment: fixed;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(201, 168, 76, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(201, 168, 76, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(201, 168, 76, 0.04) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .container-custom {
+            width: 100%;
+            max-width: 700px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* ====== CARTE D'AUTHENTIFICATION ====== */
+        .auth-card {
+            background: linear-gradient(145deg, rgba(13,13,13,0.95), rgba(30,30,40,0.95));
+            border-radius: 25px;
+            padding: 45px 35px;
+            text-align: center;
+            box-shadow: 
+                0 25px 80px rgba(0,0,0,0.6),
+                0 0 0 3px rgba(201,168,76,0.3),
+                0 0 0 8px rgba(201,168,76,0.1),
+                inset 0 0 100px rgba(201,168,76,0.03);
+            border: 2px solid rgba(201,168,76,0.4);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .auth-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(ellipse at center, rgba(201,168,76,0.05) 0%, transparent 70%);
+            animation: shimmer 6s ease-in-out infinite;
+        }
+        
+        @keyframes shimmer {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(5deg); }
+        }
+        
+        .shield-icon {
+            width: 90px;
+            height: 90px;
+            margin: 0 auto 25px;
+            background: linear-gradient(135deg, var(--gold-primary), var(--gold-dark));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 
+                0 0 40px rgba(201,168,76,0.4),
+                0 0 80px rgba(201,168,76,0.2);
+            animation: pulse-gold 3s ease-in-out infinite;
+            position: relative;
+            z-index: 1;
+        }
+        
+        @keyframes pulse-gold {
+            0%, 100% { box-shadow: 0 0 40px rgba(201,168,76,0.4), 0 0 80px rgba(201,168,76,0.2); }
+            50% { box-shadow: 0 0 60px rgba(201,168,76,0.6), 0 0 120px rgba(201,168,76,0.3); }
+        }
+        
+        .shield-icon i { font-size: 40px; color: #0D0D0D; }
+        
+        .auth-card h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 26px;
+            font-weight: 900;
+            color: var(--gold-primary);
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            text-shadow: 0 0 30px rgba(201,168,76,0.5);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .auth-card .subtitle {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 16px;
+            color: rgba(255,255,255,0.7);
+            letter-spacing: 4px;
+            margin-bottom: 25px;
+            font-style: italic;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .divider-gold {
+            width: 120px;
+            height: 1.5px;
+            background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
+            margin: 0 auto 25px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .matricule-input {
+            width: 100%;
+            max-width: 350px;
+            padding: 15px 25px;
+            font-size: 20px;
+            font-family: 'Montserrat', sans-serif;
+            border: 2px solid rgba(201,168,76,0.3);
+            border-radius: 50px;
+            text-align: center;
+            letter-spacing: 8px;
+            font-weight: 600;
+            background: rgba(13,13,13,0.8);
+            color: var(--gold-primary);
+            transition: all 0.4s;
+            outline: none;
+            position: relative;
+            z-index: 2;
+            -webkit-appearance: none;
+            -moz-appearance: textfield;
+            caret-color: var(--gold-primary);
+        }
+        
+        .matricule-input:focus {
+            border-color: var(--gold-primary);
+            box-shadow: 
+                0 0 30px rgba(201,168,76,0.4),
+                0 0 60px rgba(201,168,76,0.2),
+                inset 0 0 30px rgba(201,168,76,0.05);
+            background: rgba(20,20,30,0.9);
+        }
+        
+        .matricule-input::placeholder {
+            color: rgba(201,168,76,0.3);
+            letter-spacing: 8px;
+        }
+        
+        .matricule-input::-webkit-inner-spin-button,
+        .matricule-input::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
+        .btn-action {
+            background: linear-gradient(135deg, var(--gold-primary), var(--gold-dark));
+            color: var(--black-velvet);
+            border: none;
+            padding: 14px 40px;
+            font-size: 15px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            letter-spacing: 2px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.4s;
+            margin-top: 25px;
+            text-transform: uppercase;
+            box-shadow: 0 8px 30px rgba(201,168,76,0.3);
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+        }
+        
+        .btn-action::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: all 0.6s;
+        }
+        
+        .btn-action:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(201,168,76,0.5);
+        }
+        
+        .btn-action:hover::before { left: 100%; }
+        .btn-action:active { transform: translateY(-1px); }
+        .btn-action:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+        
+        /* ====== INTERFACE DE VALIDATION ====== */
+        .validation-container {
+            background: linear-gradient(145deg, rgba(13,13,13,0.95), rgba(30,30,40,0.95));
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 
+                0 25px 80px rgba(0,0,0,0.6),
+                0 0 0 3px rgba(201,168,76,0.3),
+                0 0 0 8px rgba(201,168,76,0.1),
+                inset 0 0 100px rgba(201,168,76,0.03);
+            border: 2px solid rgba(201,168,76,0.4);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .validation-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(ellipse at center, rgba(201,168,76,0.05) 0%, transparent 70%);
+            animation: shimmer 8s ease-in-out infinite;
+        }
+        
+        .validation-container h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 22px;
+            font-weight: 900;
+            color: var(--gold-primary);
+            letter-spacing: 4px;
+            margin-bottom: 8px;
+            text-shadow: 0 0 20px rgba(201,168,76,0.4);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .validation-container .subtitle {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 14px;
+            color: rgba(255,255,255,0.6);
+            letter-spacing: 3px;
+            margin-bottom: 20px;
+            font-style: italic;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Info protocole */
+        .protocole-info {
+            background: rgba(201,168,76,0.08);
+            border-radius: 15px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            text-align: left;
+            border: 1px solid rgba(201,168,76,0.2);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .protocole-info .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(201,168,76,0.1);
+        }
+        
+        .protocole-info .info-row:last-child { border-bottom: none; }
+        
+        .protocole-info .label {
+            color: rgba(255,255,255,0.5);
+            font-size: 11px;
+            font-family: 'Montserrat', sans-serif;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        
+        .protocole-info .value {
+            color: white;
+            font-weight: 600;
+            font-size: 13px;
+            font-family: 'Montserrat', sans-serif;
+        }
+        
+        .protocole-info .badge-gold {
+            background: linear-gradient(135deg, var(--gold-dark), var(--gold-primary));
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 11px;
+            letter-spacing: 3px;
+            font-weight: 600;
+        }
+        
+        /* Section recherche invité */
+        .invite-search-section {
+            background: rgba(201,168,76,0.05);
+            border-radius: 15px;
+            padding: 18px;
+            margin: 15px 0;
+            border: 1px solid rgba(201,168,76,0.15);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .invite-search-section label {
+            color: rgba(255,255,255,0.7);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            display: block;
+        }
+        
+        .invite-search-section .matricule-input {
+            font-size: 16px;
+            padding: 10px 18px;
+            letter-spacing: 6px;
+            max-width: 280px;
+        }
+        
+        .invite-search-section .btn-action {
+            font-size: 12px;
+            padding: 10px 25px;
+            margin-top: 10px;
+        }
+        
+        /* ====== CARTON D'INVITATION (Même que invite.html) ====== */
+        .invitation-card {
+            background: linear-gradient(180deg, 
+                #FDF8F0 0%, 
+                #FAF3E6 25%, 
+                #FDF8F0 60%, 
+                #FAF3E6 85%, 
+                #FDF8F0 100%);
+            border-radius: 12px;
+            padding: 0;
+            text-align: center;
+            position: relative;
+            box-shadow: 
+                0 20px 60px rgba(0,0,0,0.7),
+                0 0 0 5px var(--gold-dark),
+                0 0 0 8px var(--gold-primary),
+                0 0 0 11px var(--gold-dark),
+                0 0 0 14px rgba(139,105,20,0.5);
+            overflow: hidden;
+            font-family: 'Cormorant Garamond', 'Georgia', serif;
+            margin: 25px 0;
+        }
+        
+        .couple-photo-watermark {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('th.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0.18;
+            z-index: 1;
+            filter: blur(0.5px) brightness(1.1) contrast(1.1);
+            pointer-events: none;
+        }
+        
+        .photo-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, 
+                rgba(253,248,240,0.85) 0%, 
+                rgba(253,248,240,0.75) 30%, 
+                rgba(253,248,240,0.65) 50%, 
+                rgba(253,248,240,0.75) 70%, 
+                rgba(253,248,240,0.85) 100%);
+            z-index: 2;
+            pointer-events: none;
+        }
+        
+        .ornament-corner {
+            position: absolute;
+            width: 70px;
+            height: 70px;
+            opacity: 0.45;
+            z-index: 4;
+        }
+        
+        .ornament-corner.top-left { top: 8px; left: 8px; }
+        .ornament-corner.top-right { top: 8px; right: 8px; transform: scaleX(-1); }
+        .ornament-corner.bottom-left { bottom: 8px; left: 8px; transform: scaleY(-1); }
+        .ornament-corner.bottom-right { bottom: 8px; right: 8px; transform: scale(-1, -1); }
+        
+        .inner-border {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            bottom: 15px;
+            border: 1.5px double var(--gold-primary);
+            border-radius: 5px;
+            z-index: 3;
+            pointer-events: none;
+            opacity: 0.55;
+        }
+        
+        .inner-border-corner {
+            position: absolute;
+            width: 25px;
+            height: 25px;
+            border-color: var(--gold-primary);
+            border-style: solid;
+            z-index: 3;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+        
+        .inner-border-corner.top-left { top: 8px; left: 8px; border-width: 2px 0 0 2px; border-radius: 3px 0 0 0; }
+        .inner-border-corner.top-right { top: 8px; right: 8px; border-width: 2px 2px 0 0; border-radius: 0 3px 0 0; }
+        .inner-border-corner.bottom-left { bottom: 8px; left: 8px; border-width: 0 0 2px 2px; border-radius: 0 0 0 3px; }
+        .inner-border-corner.bottom-right { bottom: 8px; right: 8px; border-width: 0 2px 2px 0; border-radius: 0 0 3px 0; }
+        
+        .card-content {
+            position: relative;
+            z-index: 5;
+            padding: 25px 35px;
+        }
+        
+        .header-crest { margin-bottom: 8px; }
+        .crest-icon { font-size: 28px; color: var(--gold-dark); }
+        .crest-line { width: 60px; height: 1px; background: linear-gradient(90deg, transparent, var(--gold-dark), transparent); margin: 4px auto; }
+        
+        .protocol-text {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 11px;
+            color: var(--gold-dark);
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .couple-section { margin: 8px 0; }
+        
+        .couple-names {
+            font-family: 'Great Vibes', cursive;
+            font-size: 36px;
+            color: var(--burgundy);
+            line-height: 1.1;
+            text-shadow: 1px 1px 2px rgba(107,29,47,0.2);
+        }
+        
+        .couple-names .and-symbol {
+            font-family: 'Playfair Display', serif;
+            font-size: 20px;
+            color: var(--gold-dark);
+            display: block;
+            margin: 1px 0;
+        }
+        
+        .couple-subtitle {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 13px;
+            color: #666;
+            font-style: italic;
+            margin-top: 3px;
+            letter-spacing: 1px;
+        }
+        
+        .invitation-phrase {
+            font-family: 'Playfair Display', serif;
+            font-size: 14px;
+            color: #333;
+            margin: 10px 0 8px;
+            font-style: italic;
+            letter-spacing: 0.5px;
+            line-height: 1.3;
+        }
+        
+        .guest-name-section { margin: 8px 0; padding: 5px 0; }
+        
+        .guest-name-section::before,
+        .guest-name-section::after {
+            content: '❧';
+            font-size: 15px;
+            color: var(--gold-dark);
+            display: block;
+            margin: 3px 0;
+        }
+        
+        .guest-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 20px;
+            font-weight: 900;
+            color: var(--black-velvet);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            display: inline-block;
+            padding: 4px 15px;
+            border-top: 1px solid var(--gold-dark);
+            border-bottom: 1px solid var(--gold-dark);
+            line-height: 1.2;
+            text-shadow: 0 1px 3px rgba(253,248,240,0.8);
+        }
+        
+        .matricule-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--gold-dark), var(--gold-primary));
+            color: white;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 10px;
+            letter-spacing: 3px;
+            font-weight: 600;
+            margin: 6px 0;
+            box-shadow: 0 2px 10px rgba(139,105,20,0.3);
+        }
+        
+        .table-assignee {
+            display: inline-block;
+            background: rgba(201,168,76,0.12);
+            border: 1px solid var(--gold-primary);
+            color: var(--gold-dark);
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 9px;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+            margin: 3px 0;
+            text-transform: uppercase;
+        }
+        
+        .table-assignee i { margin-right: 4px; font-size: 10px; }
+        
+        .event-details {
+            margin: 10px 0;
+            background: rgba(201,168,76,0.04);
+            border-radius: 10px;
+            padding: 10px 15px;
+            border: 1px solid rgba(201,168,76,0.12);
+        }
+        
+        .event-detail-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 4px 0;
+            font-size: 12px;
+            color: #444;
+        }
+        
+        .event-detail-row i {
+            color: var(--gold-dark);
+            font-size: 13px;
+            margin-right: 8px;
+            width: 18px;
+            text-align: center;
+        }
+        
+        .event-detail-row strong { color: var(--burgundy); margin-left: 2px; }
+        .event-detail-row .highlight { color: var(--burgundy); font-weight: 700; font-size: 14px; }
+        
+        .footer-text {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 11px;
+            color: #888;
+            font-style: italic;
+            margin-top: 8px;
+            line-height: 1.3;
+            letter-spacing: 0.3px;
+        }
+        
+        .footer-ornament {
+            font-size: 18px;
+            color: var(--gold-dark);
+            margin-top: 8px;
+            letter-spacing: 6px;
+        }
+        
+        /* Statut de l'invité sur le carton */
+        .invitation-status {
+            position: absolute;
+            top: 20px;
+            right: 25px;
+            z-index: 10;
+            font-family: 'Montserrat', sans-serif;
+        }
+        
+        .status-badge-invitation {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        
+        .status-valid-invitation { background: #28a745; color: white; }
+        .status-expired-invitation { background: #dc3545; color: white; }
+        .status-waiting-invitation { background: #ffc107; color: #333; }
+        
+        /* Boutons d'action */
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 14px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            letter-spacing: 2px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.4s;
+            text-transform: uppercase;
+            box-shadow: 0 5px 20px rgba(40,167,69,0.3);
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(40,167,69,0.5);
+        }
+        
+        .btn-success:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 14px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            letter-spacing: 2px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.4s;
+            text-transform: uppercase;
+            box-shadow: 0 5px 20px rgba(220,53,69,0.3);
+        }
+        
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(220,53,69,0.5);
+        }
+        
+        .btn-logout {
+            background: transparent;
+            color: rgba(255,255,255,0.6);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 8px 22px;
+            font-size: 11px;
+            font-family: 'Montserrat', sans-serif;
+            letter-spacing: 1.5px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 15px;
+            text-transform: uppercase;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .btn-logout:hover {
+            background: rgba(220,53,69,0.2);
+            color: #ff6b6b;
+            border-color: rgba(220,53,69,0.5);
+        }
+        
+        .hidden { display: none; }
+        
+        .error-message {
+            color: #ff6b6b;
+            margin-top: 10px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 12px;
+            letter-spacing: 1px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .success-message {
+            color: #51cf66;
+            margin-top: 10px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 12px;
+            letter-spacing: 1px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .toast-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 280px;
+        }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @media (max-width: 600px) {
+            .auth-card, .validation-container { padding: 25px 18px; }
+            .auth-card h1 { font-size: 22px; letter-spacing: 4px; }
+            .validation-container h2 { font-size: 18px; }
+            .matricule-input { font-size: 16px; padding: 12px 18px; }
+            .card-content { padding: 20px 18px; }
+            .couple-names { font-size: 30px; }
+            .guest-name { font-size: 17px; }
+            .btn-action { padding: 12px 30px; font-size: 13px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-custom">
+        <!-- ========== AUTHENTIFICATION PROTOCOLE ========== -->
+        <div class="auth-card" id="authCard">
+            <div class="shield-icon">
+                <i class="bi bi-shield-check"></i>
+            </div>
+            <h1>Protocole</h1>
+            <p class="subtitle">Validation des entrées</p>
+            <div class="divider-gold"></div>
+            <p style="color: rgba(255,255,255,0.5); font-size: 13px; letter-spacing: 3px; font-family: 'Montserrat', sans-serif; position: relative; z-index: 1; text-transform: uppercase;">
+                Authentifiez-vous
+            </p>
+            <input 
+                type="text" 
+                class="matricule-input" 
+                id="protocoleMatriculeInput" 
+                placeholder="****" 
+                maxlength="4" 
+                inputmode="numeric" 
+                pattern="[0-9]*" 
+                autocomplete="off"
+                style="-webkit-appearance: none; -moz-appearance: textfield;"
+            >
+            <br>
+            <button class="btn-action" id="btnAuthProtocole" type="button">
+                <i class="bi bi-shield-lock"></i> S'authentifier
+            </button>
+            <div class="error-message" id="authErrorMessage"></div>
+        </div>
+        
+        <!-- ========== INTERFACE DE VALIDATION ========== -->
+        <div id="validationInterface" class="hidden">
+            <div class="validation-container">
+                <h2><i class="bi bi-clipboard-check"></i> Validation d'entrée</h2>
+                <p class="subtitle">Protocole de contrôle des invitations</p>
+                
+                <!-- Info protocole connecté -->
+                <div class="protocole-info" id="protocoleInfo"></div>
+                
+                <!-- Recherche invité -->
+                <div class="invite-search-section">
+                    <label><i class="bi bi-search"></i> Matricule de l'invité à vérifier</label>
+                    <input 
+                        type="text" 
+                        class="matricule-input" 
+                        id="inviteMatriculeInput" 
+                        placeholder="****" 
+                        maxlength="4" 
+                        inputmode="numeric" 
+                        pattern="[0-9]*" 
+                        autocomplete="off"
+                        style="font-size: 16px; padding: 10px 18px; letter-spacing: 6px; max-width: 280px;"
+                    >
+                    <br>
+                    <button class="btn-action" id="btnVerifierInvite" type="button" style="font-size: 12px; padding: 10px 25px; margin-top: 10px;">
+                        <i class="bi bi-search"></i> Vérifier l'invité
+                    </button>
+                    <div class="error-message" id="inviteErrorMessage"></div>
+                </div>
+                
+                <!-- Carton d'invitation de l'invité -->
+                <div id="invitationPreview" class="hidden">
+                    <div class="invitation-card" id="invitationCard">
+                        <!-- Photo des mariés -->
+                        <div class="couple-photo-watermark"></div>
+                        <div class="photo-overlay"></div>
+                        
+                        <!-- Statut de l'invité -->
+                        <div class="invitation-status">
+                            <span class="status-badge-invitation" id="statusBadge">En attente</span>
+                        </div>
+                        
+                        <!-- Bordures -->
+                        <div class="inner-border"></div>
+                        <div class="inner-border-corner top-left"></div>
+                        <div class="inner-border-corner top-right"></div>
+                        <div class="inner-border-corner bottom-left"></div>
+                        <div class="inner-border-corner bottom-right"></div>
+                        
+                        <!-- Ornements -->
+                        <div class="ornament-corner top-left">
+                            <svg viewBox="0 0 70 70" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M6,35 Q6,6 35,6" fill="none" stroke="#C9A84C" stroke-width="1.5"/>
+                                <circle cx="35" cy="6" r="2" fill="#C9A84C"/>
+                                <circle cx="6" cy="35" r="2" fill="#C9A84C"/>
+                            </svg>
+                        </div>
+                        <div class="ornament-corner top-right">
+                            <svg viewBox="0 0 70 70" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M6,35 Q6,6 35,6" fill="none" stroke="#C9A84C" stroke-width="1.5"/>
+                                <circle cx="35" cy="6" r="2" fill="#C9A84C"/>
+                                <circle cx="6" cy="35" r="2" fill="#C9A84C"/>
+                            </svg>
+                        </div>
+                        <div class="ornament-corner bottom-left">
+                            <svg viewBox="0 0 70 70" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M6,35 Q6,6 35,6" fill="none" stroke="#C9A84C" stroke-width="1.5"/>
+                                <circle cx="35" cy="6" r="2" fill="#C9A84C"/>
+                                <circle cx="6" cy="35" r="2" fill="#C9A84C"/>
+                            </svg>
+                        </div>
+                        <div class="ornament-corner bottom-right">
+                            <svg viewBox="0 0 70 70" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M6,35 Q6,6 35,6" fill="none" stroke="#C9A84C" stroke-width="1.5"/>
+                                <circle cx="35" cy="6" r="2" fill="#C9A84C"/>
+                                <circle cx="6" cy="35" r="2" fill="#C9A84C"/>
+                            </svg>
+                        </div>
+                        
+                        <!-- Contenu -->
+                        <div class="card-content">
+                            <div class="header-crest">
+                                <div class="crest-icon">⚜</div>
+                                <div class="crest-line"></div>
+                            </div>
+                            
+                            <p class="protocol-text">Carton d'Honneur</p>
+                            
+                            <div class="couple-section">
+                                <div class="couple-names">
+                                    Élise<span class="and-symbol">&</span>Thomas
+                                </div>
+                                <p class="couple-subtitle">ont l'immense joie de vous convier</p>
+                            </div>
+                            
+                            <p class="invitation-phrase">à la célébration de leur union sacrée</p>
+                            
+                            <div class="guest-name-section">
+                                <div class="guest-name" id="guestNameDisplay">Couple [Nom]</div>
+                            </div>
+                            
+                            <div class="matricule-badge" id="matriculeDisplay">N° [0000]</div>
+                            
+                            <div class="table-assignee" id="tableDisplay">
+                                <i class="bi bi-dot"></i> Table non assignée
+                            </div>
+                            
+                            <div class="event-details">
+                                <div class="event-detail-row">
+                                    <i class="bi bi-calendar-heart"></i>
+                                    <span>Le <strong>Samedi 14 Juin 2025</strong> à <span class="highlight">15h00</span></span>
+                                </div>
+                                <div class="event-detail-row">
+                                    <i class="bi bi-geo-alt"></i>
+                                    <span><strong>Domaine des Roses</strong> - 123 Av. du Bonheur, Paris</span>
+                                </div>
+                            </div>
+                            
+                            <p class="footer-text">« Que l'amour soit le fil d'or qui tisse nos vies »</p>
+                            
+                            <div class="footer-ornament">⚜ ❦ ⚜</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Boutons d'action -->
+                    <div class="action-buttons">
+                        <button class="btn-success" id="btnValiderEntree" type="button">
+                            <i class="bi bi-check-circle"></i> Valider l'entrée
+                        </button>
+                        <button class="btn-danger" id="btnRefuserEntree" type="button">
+                            <i class="bi bi-x-circle"></i> Annuler
+                        </button>
+                    </div>
+                    <div class="success-message" id="validationMessage"></div>
+                </div>
+                
+                <!-- Déconnexion -->
+                <button class="btn-logout" id="btnLogout" type="button">
+                    <i class="bi bi-box-arrow-right"></i> Se déconnecter
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toastContainer" class="toast-notification"></div>
+
+    <script>
+        // ========== CONFIGURATION FIREBASE ==========
+        const firebaseConfig = {
+            apiKey: "AIzaSyDOGgIg1DptCLdLh27IVkIM6WqTodVYgYY",
+            authDomain: "invitation-nuptiale.firebaseapp.com",
+            projectId: "invitation-nuptiale",
+            storageBucket: "invitation-nuptiale.firebasestorage.app",
+            messagingSenderId: "974590314915",
+            appId: "1:974590314915:web:c96fe6e8a5b731a375b216",
+            measurementId: "G-YKLXH4NJ4E"
+        };
+        
+        let db;
+        let firebaseInitialized = false;
+        let protocoleActuel = null;
+        let inviteSelectionne = null;
+        
+        try {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+            firebaseInitialized = true;
+            console.log('✅ Firebase initialisé');
+            db.enablePersistence({ synchronizeTabs: true })
+                .then(() => console.log('✅ Persistance activée'))
+                .catch((err) => console.warn('⚠️ Persistance:', err.code));
+        } catch (error) {
+            console.error('❌ Erreur Firebase:', error);
+        }
+        
+        function escapeHtml(t) {
+            if (!t) return '';
+            const d = document.createElement('div');
+            d.textContent = t;
+            return d.innerHTML;
+        }
+        
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const bgColor = type === 'success' ? 'linear-gradient(135deg, #28a745, #20c997)' : 
+                           (type === 'warning' ? 'linear-gradient(135deg, #ffc107, #ff9800)' : 
+                            'linear-gradient(135deg, #dc3545, #c82333)');
+            const textColor = type === 'warning' ? '#333' : 'white';
+            const icon = type === 'success' ? 'check-circle-fill' : 
+                        (type === 'warning' ? 'exclamation-triangle-fill' : 'x-circle-fill');
+            
+            const toastHtml = `
+                <div class="toast notification-toast" style="
+                    background: ${bgColor}; color: ${textColor}; border-radius: 12px; 
+                    margin-bottom: 10px; animation: slideInRight 0.4s ease-out;
+                    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+                ">
+                    <div class="toast-body" style="padding: 12px 20px; font-family: 'Montserrat', sans-serif; font-size: 13px;">
+                        <div style="display: flex; align-items: flex-start;">
+                            <i class="bi bi-${icon} me-2" style="font-size: 18px;"></i>
+                            <div>${message}</div>
+                        </div>
+                    </div>
+                </div>`;
+            container.insertAdjacentHTML('afterbegin', toastHtml);
+            setTimeout(() => {
+                const firstToast = container.firstElementChild;
+                if (firstToast) {
+                    firstToast.style.opacity = '0';
+                    firstToast.style.transition = 'opacity 0.4s';
+                    setTimeout(() => firstToast.remove(), 400);
+                }
+            }, 5000);
+        }
+        
+        async function authentifierProtocole(matricule) {
+            if (!firebaseInitialized || !db) throw new Error('Base de données non initialisée');
+            const snapshot = await db.collection('protocoles').where('matricule', '==', matricule).limit(1).get();
+            if (snapshot.empty) return null;
+            const doc = snapshot.docs[0];
+            return { id: doc.id, ...doc.data() };
+        }
+        
+        async function rechercherInviteParMatricule(matricule) {
+            if (!firebaseInitialized || !db) throw new Error('Base de données non initialisée');
+            const snapshot = await db.collection('invites').where('matricule', '==', matricule).limit(1).get();
+            if (snapshot.empty) return null;
+            const doc = snapshot.docs[0];
+            return { id: doc.id, ...doc.data() };
+        }
+        
+        async function getTableAssigned(invite) {
+            try {
+                let tableQuery = db.collection('tables');
+                if (invite.familleId) {
+                    const snapshot = await tableQuery.where('familleId', '==', invite.familleId).limit(1).get();
+                    if (!snapshot.empty) return snapshot.docs[0].data();
+                }
+                if (invite.parenteId) {
+                    const snapshot = await tableQuery.where('parenteId', '==', invite.parenteId).limit(1).get();
+                    if (!snapshot.empty) return snapshot.docs[0].data();
+                }
+                if (invite.familleNom) {
+                    const snapshot = await tableQuery.where('familleNom', '==', invite.familleNom).limit(1).get();
+                    if (!snapshot.empty) return snapshot.docs[0].data();
+                }
+                return null;
+            } catch (error) {
+                console.error('Erreur recherche table:', error);
+                return null;
+            }
+        }
+        
+        function afficherInterfaceProtocole(protocole) {
+            document.getElementById('authCard').style.display = 'none';
+            document.getElementById('validationInterface').classList.remove('hidden');
+            document.getElementById('validationInterface').style.animation = 'fadeInUp 0.5s ease-out';
+            
+            document.getElementById('protocoleInfo').innerHTML = `
+                <div class="info-row">
+                    <span class="label">Protocole connecté</span>
+                    <span class="value">${escapeHtml(protocole.nomComplet)}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Matricule</span>
+                    <span class="value"><span class="badge-gold">${escapeHtml(protocole.matricule)}</span></span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Genre</span>
+                    <span class="value">${protocole.genre === 'M' ? '👨 Masculin' : '👩 Féminin'}</span>
+                </div>
+            `;
+        }
+        
+        async function afficherInvitationInvite(invite) {
+            const preview = document.getElementById('invitationPreview');
+            preview.classList.remove('hidden');
+            preview.style.animation = 'fadeInUp 0.5s ease-out';
+            
+            // Nom avec "Couple"
+            document.getElementById('guestNameDisplay').textContent = 'Couple ' + invite.nomComplet;
+            document.getElementById('matriculeDisplay').textContent = 'N° ' + invite.matricule;
+            
+            // Table
+            const table = await getTableAssigned(invite);
+            const tableDisplay = document.getElementById('tableDisplay');
+            if (table) {
+                tableDisplay.innerHTML = '<i class="bi bi-dot"></i> Table : ' + table.nom + ' (' + table.occupation + ' pl.)';
+            } else {
+                tableDisplay.innerHTML = '<i class="bi bi-dot"></i> Table d\'honneur';
+            }
+            
+            // Statut
+            const statusBadge = document.getElementById('statusBadge');
+            if (invite.estValide) {
+                statusBadge.textContent = '⚠️ Déjà entré (expiré)';
+                statusBadge.className = 'status-badge-invitation status-expired-invitation';
+                document.getElementById('btnValiderEntree').style.display = 'none';
+                document.getElementById('validationMessage').textContent = '⚠️ Cet invité a déjà été validé. Le matricule est expiré.';
+                document.getElementById('validationMessage').style.color = '#ffc107';
+            } else {
+                statusBadge.textContent = '✅ En attente';
+                statusBadge.className = 'status-badge-invitation status-waiting-invitation';
+                document.getElementById('btnValiderEntree').style.display = 'inline-block';
+                document.getElementById('validationMessage').textContent = '';
+            }
+            
+            // Scroll vers l'invitation
+            setTimeout(() => {
+                preview.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 200);
+        }
+        
+        async function validerEntree() {
+            if (!inviteSelectionne) {
+                showToast('Aucun invité sélectionné', 'warning');
+                return;
+            }
+            
+            if (inviteSelectionne.estValide) {
+                showToast('⚠️ Cet invité a déjà été validé', 'warning');
+                return;
+            }
+            
+            const btnValider = document.getElementById('btnValiderEntree');
+            btnValider.disabled = true;
+            btnValider.innerHTML = '<i class="bi bi-hourglass-split"></i> Validation...';
+            
+            try {
+                await db.collection('invites').doc(inviteSelectionne.id).update({
+                    estValide: true,
+                    validePar: protocoleActuel.id,
+                    valideParNom: protocoleActuel.nomComplet,
+                    valideParMatricule: protocoleActuel.matricule,
+                    dateValidation: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                inviteSelectionne.estValide = true;
+                
+                // Mettre à jour l'affichage
+                const statusBadge = document.getElementById('statusBadge');
+                statusBadge.textContent = '⚠️ Déjà entré (expiré)';
+                statusBadge.className = 'status-badge-invitation status-expired-invitation';
+                document.getElementById('btnValiderEntree').style.display = 'none';
+                document.getElementById('validationMessage').textContent = '✅ Entrée validée avec succès ! Le matricule est maintenant expiré.';
+                document.getElementById('validationMessage').style.color = '#51cf66';
+                
+                showToast('✅ Entrée validée avec succès ! Matricule expiré.', 'success');
+                
+            } catch (error) {
+                console.error('❌ Erreur validation:', error);
+                showToast('❌ Erreur lors de la validation', 'error');
+            } finally {
+                btnValider.disabled = false;
+                btnValider.innerHTML = '<i class="bi bi-check-circle"></i> Valider l\'entrée';
+            }
+        }
+        
+        function reinitialiserRecherche() {
+            inviteSelectionne = null;
+            document.getElementById('invitationPreview').classList.add('hidden');
+            document.getElementById('inviteMatriculeInput').value = '';
+            document.getElementById('inviteErrorMessage').textContent = '';
+            document.getElementById('validationMessage').textContent = '';
+        }
+        
+        function deconnexion() {
+            protocoleActuel = null;
+            inviteSelectionne = null;
+            document.getElementById('authCard').style.display = 'block';
+            document.getElementById('validationInterface').classList.add('hidden');
+            document.getElementById('protocoleMatriculeInput').value = '';
+            document.getElementById('inviteMatriculeInput').value = '';
+            document.getElementById('invitationPreview').classList.add('hidden');
+            document.getElementById('authErrorMessage').textContent = '';
+            document.getElementById('inviteErrorMessage').textContent = '';
+            document.getElementById('validationMessage').textContent = '';
+            setTimeout(() => document.getElementById('protocoleMatriculeInput').focus(), 300);
+            showToast('👋 Déconnecté avec succès', 'success');
+        }
+        
+        // ========== EVENT LISTENERS ==========
+        document.addEventListener('DOMContentLoaded', function() {
+            const protocoleInput = document.getElementById('protocoleMatriculeInput');
+            const btnAuth = document.getElementById('btnAuthProtocole');
+            const authError = document.getElementById('authErrorMessage');
+            const inviteInput = document.getElementById('inviteMatriculeInput');
+            const btnVerifier = document.getElementById('btnVerifierInvite');
+            const inviteError = document.getElementById('inviteErrorMessage');
+            const btnValider = document.getElementById('btnValiderEntree');
+            const btnRefuser = document.getElementById('btnRefuserEntree');
+            const btnLogout = document.getElementById('btnLogout');
+            
+            // Filtrage protocole
+            protocoleInput.addEventListener('input', function(e) {
+                this.value = this.value.replace(/[^0-9]/g, '').substring(0, 4);
+            });
+            protocoleInput.addEventListener('keypress', function(e) {
+                if (!/[0-9]/.test(e.key) && e.key !== 'Enter' && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && e.key !== 'Tab') e.preventDefault();
+                if (e.key === 'Enter') { e.preventDefault(); btnAuth.click(); }
+            });
+            protocoleInput.addEventListener('paste', function(e) {
+                e.preventDefault();
+                this.value = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '').substring(0, 4);
+            });
+            
+            // Authentification
+            btnAuth.addEventListener('click', async function() {
+                const matricule = protocoleInput.value.trim();
+                authError.textContent = '';
+                if (!matricule || matricule.length !== 4 || !/^\d{4}$/.test(matricule)) {
+                    authError.textContent = '⚠️ Veuillez entrer un matricule valide à 4 chiffres';
+                    return;
+                }
+                btnAuth.disabled = true;
+                btnAuth.innerHTML = '<i class="bi bi-hourglass-split"></i> Authentification...';
+                try {
+                    if (!firebaseInitialized || !db) throw new Error('Base de données non connectée');
+                    const protocole = await authentifierProtocole(matricule);
+                    if (!protocole) {
+                        authError.textContent = '❌ Matricule protocole non trouvé';
+                        return;
+                    }
+                    protocoleActuel = protocole;
+                    afficherInterfaceProtocole(protocole);
+                    showToast(`✅ Bienvenue ${protocole.nomComplet} !`, 'success');
+                } catch (error) {
+                    authError.textContent = '❌ Erreur: ' + error.message;
+                } finally {
+                    btnAuth.disabled = false;
+                    btnAuth.innerHTML = '<i class="bi bi-shield-lock"></i> S\'authentifier';
+                }
+            });
+            
+            // Filtrage invité
+            inviteInput.addEventListener('input', function(e) {
+                this.value = this.value.replace(/[^0-9]/g, '').substring(0, 4);
+            });
+            inviteInput.addEventListener('keypress', function(e) {
+                if (!/[0-9]/.test(e.key) && e.key !== 'Enter' && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && e.key !== 'Tab') e.preventDefault();
+                if (e.key === 'Enter') { e.preventDefault(); btnVerifier.click(); }
+            });
+            inviteInput.addEventListener('paste', function(e) {
+                e.preventDefault();
+                this.value = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '').substring(0, 4);
+            });
+            
+            // Vérification invité
+            btnVerifier.addEventListener('click', async function() {
+                const matricule = inviteInput.value.trim();
+                inviteError.textContent = '';
+                if (!matricule || matricule.length !== 4 || !/^\d{4}$/.test(matricule)) {
+                    inviteError.textContent = '⚠️ Veuillez entrer un matricule valide à 4 chiffres';
+                    return;
+                }
+                btnVerifier.disabled = true;
+                btnVerifier.innerHTML = '<i class="bi bi-hourglass-split"></i> Recherche...';
+                try {
+                    if (!firebaseInitialized || !db) throw new Error('Base de données non connectée');
+                    const invite = await rechercherInviteParMatricule(matricule);
+                    if (!invite) {
+                        inviteError.textContent = '❌ Invité non trouvé';
+                        document.getElementById('invitationPreview').classList.add('hidden');
+                        return;
+                    }
+                    inviteSelectionne = invite;
+                    await afficherInvitationInvite(invite);
+                } catch (error) {
+                    inviteError.textContent = '❌ Erreur: ' + error.message;
+                } finally {
+                    btnVerifier.disabled = false;
+                    btnVerifier.innerHTML = '<i class="bi bi-search"></i> Vérifier l\'invité';
+                }
+            });
+            
+            // Actions
+            btnValider.addEventListener('click', validerEntree);
+            btnRefuser.addEventListener('click', reinitialiserRecherche);
+            btnLogout.addEventListener('click', deconnexion);
+            
+            setTimeout(() => protocoleInput.focus(), 500);
+            console.log('✅ HybriLink Protocole - Prêt');
+        });
+    </script>
+
+   <script>
+        // Enregistrement du Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('firebase-messaging-sw.js')
+                    .then(reg => console.log('✅ Service Worker push enregistré:', reg.scope))
+                    .catch(err => console.log('❌ Erreur Service Worker push:', err));
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('✅ SW principal enregistré:', reg.scope))
+                    .catch(err => console.log('❌ Erreur SW principal:', err));
+            });
+        }
+        
+        console.log('🚀 Page de connexion parent - Redirection immédiate si déjà connecté');
+    </script>
+</body>
+</html>
